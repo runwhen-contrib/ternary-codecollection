@@ -7,8 +7,10 @@ Library             BuiltIn
 Library             RW.Core
 Library             RW.CLI
 Library             RW.platform
+Library             RW.Workspace
 Library             OperatingSystem
 Library             Ternary.Utils
+
 
 Suite Setup         Suite Initialization
 
