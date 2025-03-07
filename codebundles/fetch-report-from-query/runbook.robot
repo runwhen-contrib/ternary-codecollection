@@ -89,9 +89,9 @@ Fetch Ternary Report from Query
 
             ${report_url}=     Set Variable    "${TERNARY_APP_URL}/report-builder/${match['id']}?tenantID=${TERNARY_TENANT_ID.value}" 
             ${report_data}=    RW.CLI.Run Cli
-            ...    cmd=curl -s -H "Content-Type: application/json" -H "Authorization: Bearer ${TERNARY_API_TOKEN.value}" "${TERNARY_BASE_API_URL}/reports/${match['id']}" 
+            ...    cmd=curl -s -H "Content-Type: application/json" -H "Authorization: Bearer ${TERNARY_API_TOKEN.value}" "${TERNARY_BASE_API_URL}/reports/${match['id']}" | jq . 
             ...    env=${env}
-            Add Pre To Report    ${match['name']}\n${report_data}
+            Add Pre To Report    ${match['name']}\n${report_data.stdout}
 
             RW.Core.Add Issue
             ...    severity=4
