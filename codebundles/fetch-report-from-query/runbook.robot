@@ -47,14 +47,14 @@ Suite Initialization
     Set Suite Variable    ${MATCH_THRESHOLD}    ${MATCH_THRESHOLD}   
 
     ${SESSION}=    RW.Workspace.Import Runsession Details    
-    Set Suite Variable    ${SESSION}    ${SESSION}   
-
+    Set Suite Variable    ${SESSION}    ${SESSION}
 
     ${QUERY}=    RW.Core.Import User Variable    QUERY
     ...    type=string
     ...    description=The Ternary Tenant ID
     ...    pattern=\w*
     ...    default="Daily Cost by Service - Month-to-date"
+    Set Suite Variable    ${QUERY}    ${QUERY}
 
     Set Suite Variable    ${env}    {"TERNARY_BASE_API_URL":"${TERNARY_BASE_API_URL}", "TERNARY_TENANT_ID":"${TERNARY_TENANT_ID.key}", "TERNARY_API_TOKEN":"${TERNARY_API_TOKEN}", "OUTPUT_DIR":"${OUTPUT_DIR}"}
 
@@ -63,8 +63,8 @@ Fetch Ternary Report from Query
     [Documentation]    Calls GET ${TERNARY_BASE_API_URL}/alert-rules?tenantID=${TERNARY_TENANT_ID} using cURL.
 
     ${session_list}=    Evaluate    json.loads(r'''${SESSION}''')    json
-    ${query}=              Set Variable    ${session_list["runRequests"][0]["fromSearchQuery"]}
-    IF    "${query}" == None
+    ${search_query}=              Set Variable    ${session_list["runRequests"][0]["fromSearchQuery"]}
+    IF    ${search_query} == None
         Add Pre To Report    Could not find a query in RunSession, falling back to default configured query ${QUERY}
         ${SEARCH_QUERY}=     Set Variable    ${QUERY}
     ELSE
