@@ -64,7 +64,7 @@ Fetch Ternary Report from Query
 
     ${session_list}=    Evaluate    json.loads(r'''${SESSION}''')    json
     ${query}=              Set Variable    ${session_list["runRequests"][0]["fromSearchQuery"]}
-    IF    "${query}" == ""
+    IF    "${query}" == None
         Add Pre To Report    Could not find a query in RunSession, falling back to default configured query ${QUERY}
         ${SEARCH_QUERY}=     Set Variable    ${QUERY}
     ELSE
