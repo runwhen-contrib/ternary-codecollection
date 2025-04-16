@@ -2,49 +2,44 @@ import json
 from difflib import SequenceMatcher
 from robot.api.deco import keyword
 
-@keyword("Get Top Matches")
-def get_top_matches(data_json, query, limit=5):
+_WRAPPERS = {
+    '[': ']',
+    '{': '}',
+    '(': ')',
+    '<': '>',
+    '"': '"',
+    "'": "'",
+}
+
+def _unwrap(text: str) -> str:
+    """Strip repeated symmetric wrappers like [], '', {}, etc., plus surrounding whitespace."""
+    t = text.strip()
+    while len(t) >= 2 and t[0] in _WRAPPERS and t[-1] == _WRAPPERS[t[0]]:
+        t = t[1:-1].strip()
+    return t
+
+def get_top_matches(data_json: str, query: str, limit: int = 5):
     """
-    Get top 'limit' matches for 'query' from a JSON string 'data_json'.
-    
-    Example usage in Robot Framework:
-    
-        *** Settings ***
-        Library    SearchLibrary.py
-
-        *** Test Cases ***
-        Example Test
-            ${json_str}=    Catenate    SEPARATOR=    [
-            ...    { "id": "123", "name": "Cost by Service - Last Month" },
-            ...    { "id": "456", "name": "Daily Cost - Month-to-date" },
-            ...    ]
-
-            ${results}=    Get Top Matches    ${json_str}    cost over the last month    5
-            Log Many    ${results}
-
-    The returned list of dictionaries includes:
-        - 'score' (float)  : The fuzzy matching ratio
-        - 'id'    (string) : The matching item's ID
-        - 'name'  (string) : The matching item's name
+    Return up to `limit` best matches for `query` against the JSON list of
+    objects (each having id and name).  Each result dict has keys: score, id, name.
     """
-    # Convert string to Python list of dicts
     data = json.loads(data_json)
 
-    def similarity(a, b):
+    clean_query = _unwrap(query).lower()
+
+    def similarity(a: str, b: str) -> float:
         return SequenceMatcher(None, a, b).ratio()
 
-    query_lower = query.lower()
-    scored_items = []
-
+    scored = []
     for item in data:
-        name_lower = item.get("name", "").lower()
-        score = similarity(query_lower, name_lower)
-        scored_items.append({
-            'score': score,
-            'id': item.get('id', ''),
-            'name': item.get('name', '')
-        })
+        raw_name = item.get("name", "")
+        clean_name = _unwrap(raw_name).lower()
+        scored.append(
+            {
+                "score": similarity(clean_query, clean_name),
+                "id": item.get("id", ""),
+                "name": raw_name,          # keep original for display
+            }
+        )
 
-    # Sort by descending similarity, return up to 'limit' items
-    scored_items.sort(key=lambda x: x['score'], reverse=True)
-    return scored_items[:limit]
+    return sorted(scored, key=lambda x: x["score"], reverse=True)[:limit]
