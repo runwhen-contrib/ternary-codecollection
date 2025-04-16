@@ -55,8 +55,7 @@ Suite Initialization
     ...    pattern=\w*
     ...    default="Daily Cost by Service - Month-to-date"
     Set Suite Variable    ${QUERY}    ${QUERY}
-
-    Set Suite Variable    ${env}    {"TERNARY_BASE_API_URL":"${TERNARY_BASE_API_URL}", "TERNARY_TENANT_ID":"${TERNARY_TENANT_ID.key}", "TERNARY_API_TOKEN":"${TERNARY_API_TOKEN}", "OUTPUT_DIR":"${OUTPUT_DIR}"}
+    Set Suite Variable    ${env}    {"TERNARY_BASE_API_URL":"${TERNARY_BASE_API_URL}", "TERNARY_TENANT_ID":"${TERNARY_TENANT_ID.value}"}
 
 *** Tasks ***
 Fetch Ternary Report from Query
@@ -67,22 +66,24 @@ Fetch Ternary Report from Query
     ${search_query}=              Set Variable    ${session_list["runRequests"][0]["fromSearchQuery"]}
     IF    ${search_query} == None
         Add Pre To Report    Could not find a query in RunSession, falling back to default configured query ${QUERY}
-        ${SEARCH_QUERY}=     Set Variable    ${QUERY}
+        ${REPORT_QUERY}=     Set Variable    ${QUERY}
     ELSE
-        ${SEARCH_QUERY}=     Set Variable    ${query}
+        ${REPORT_QUERY}=     Set Variable    ${search_query}
     END
-    ${all_reports}=    RW.CLI.Run Cli
-    ...    cmd=curl -s -H "Content-Type: application/json" -H "Authorization: Bearer ${TERNARY_API_TOKEN.value}" "${TERNARY_BASE_API_URL}/reports?tenantID=${TERNARY_TENANT_ID.value}" > ${OUTPUT_DIR}/reports.json
+    ${all_reports}=    RW.CLI.Run Bash File
+    ...    bash_file=fetch_reports.sh
+    # ...    cmd=curl -s -H "Content-Type: application/json" -K TERNARY_API_TOKEN "${TERNARY_BASE_API_URL}/reports?tenantID=${TERNARY_TENANT_ID.value}" > ${OUTPUT_DIR}/reports.json
     ...    env=${env}
-
+    ...    secret_file__TERNARY_API_TOKEN=${TERNARY_API_TOKEN}
+    ...    secret_file__TERNARY_TENANT_ID=${TERNARY_TENANT_ID}
     ${report_id_to_names}=    RW.CLI.Run Cli    
-    ...    cmd=jq '[.reports[] | {id, name}]' ${OUTPUT_DIR}/reports.json
+    ...    cmd=jq '[.reports[] | {id, name}]' reports.json
     ...    env=${env}
     ${report_names}=    RW.CLI.Run Cli    
     ...    cmd=echo '${report_id_to_names.stdout}' | jq -r '.[].name'
     ...    env=${env}
     ${found_match}=    Set Variable    0
-    ${matching_reports}=          Ternary.Utils.Get Top Matches     ${report_id_to_names.stdout}    ${query}    5
+    ${matching_reports}=          Ternary.Utils.Get Top Matches     ${report_id_to_names.stdout}    ${REPORT_QUERY}    5
     FOR    ${match}    IN    @{matching_reports}
         IF     ${match['score']} > ${MATCH_THRESHOLD}
             ${found_match}=    Set Variable    1
@@ -100,7 +101,7 @@ Fetch Ternary Report from Query
             ...    actual=None
             ...    title=View Ternary Report `${match['name']}`
             ...    reproduce_hint=None
-            ...    details=User asked for a report matching `${QUERY}`. `${match['name']}` was found with score ${match['score']} (between 0 -1)
+            ...    details=User asked for a report matching `${REPORT_QUERY}`. `${match['name']}` was found with score ${match['score']} (between 0 -1)
             ...    next_steps=View the [Ternary Report URL](${report_url})
         END
     END
@@ -109,8 +110,8 @@ Fetch Ternary Report from Query
         ...    severity=3
         ...    expected=None
         ...    actual=None
-        ...    title=No Ternary Report Found Matching Query `${QUERY}`
+        ...    title=No Ternary Report Found Matching Query `${REPORT_QUERY}`
         ...    reproduce_hint=None
-        ...    details=User Query `${QUERY}` did not return any similar report names. Availabel reports are: \n${report_names.stdout}
+        ...    details=User Query `${REPORT_QUERY}` did not return any similar report names. Available reports are: \n${report_names.stdout}
         ...    next_steps=Try a different query.\nVerify available report names.\nDrop the match threshold for search results (currently ${MATCH_THRESHOLD}).
     END
