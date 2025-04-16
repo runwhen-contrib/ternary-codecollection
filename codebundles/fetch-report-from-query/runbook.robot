@@ -60,7 +60,8 @@ Suite Initialization
 
 *** Tasks ***
 Fetch Ternary Report from Query
-    [Documentation]    Calls GET ${TERNARY_BASE_API_URL}/alert-rules?tenantID=${TERNARY_TENANT_ID} using cURL.
+    [Documentation]    Connects to Ternary and searches for reports that best match the user query. Returns a list of reports and urls. 
+    [Tags]      access:read-only    cost    costanalysis    ternary    reports    finops
 
     ${session_list}=    Evaluate    json.loads(r'''${SESSION}''')    json
     ${search_query}=              Set Variable    ${session_list["runRequests"][0]["fromSearchQuery"]}
