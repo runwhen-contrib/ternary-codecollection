@@ -96,7 +96,7 @@ Fetch Ternary Report from Query
             Add Pre To Report    ${match['name']}\n${report_data.stdout}
 
             RW.Core.Add Issue
-            ...    severity=4
+            ...    severity=3
             ...    expected=None
             ...    actual=None
             ...    title=View Ternary Report `${match['name']}`
