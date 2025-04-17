@@ -64,12 +64,12 @@ Fetch Ternary Report from Query
 
     ${session_list}=    Evaluate    json.loads(r'''${SESSION}''')    json
     ${search_query}=              Set Variable    ${session_list["runRequests"][0]["fromSearchQuery"]}
-    IF    ${search_query} == None
+    IF    not $search_query or not $search_query.strip()
         Add Pre To Report    Could not find a query in RunSession, falling back to default configured query ${QUERY}
-        ${REPORT_QUERY}=     Set Variable    ${QUERY}
+        ${REPORT_QUERY}=    Set Variable    ${QUERY}
     ELSE
-        ${REPORT_QUERY}=     Set Variable    ${search_query}
-    END
+        ${REPORT_QUERY}=    Set Variable    ${search_query}
+    END    
     ${all_reports}=    RW.CLI.Run Bash File
     ...    bash_file=fetch_reports.sh
     # ...    cmd=curl -s -H "Content-Type: application/json" -K TERNARY_API_TOKEN "${TERNARY_BASE_API_URL}/reports?tenantID=${TERNARY_TENANT_ID.value}" > ${OUTPUT_DIR}/reports.json
