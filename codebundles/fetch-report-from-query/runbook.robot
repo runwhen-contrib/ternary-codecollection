@@ -89,7 +89,7 @@ Fetch Ternary Report from Query
             ${found_match}=    Set Variable    1
             Log    Score=${match['score']}, ID=${match['id']}, Name=${match['name']}
 
-            ${report_url}=     Set Variable    "${TERNARY_APP_URL}/report-builder/${match['id']}?tenantID=${TERNARY_TENANT_ID.value}" 
+            ${report_url}=     Set Variable    ${TERNARY_APP_URL}/report-builder/${match['id']}?tenantID=${TERNARY_TENANT_ID.value} 
             ${report_data}=    RW.CLI.Run Cli
             ...    cmd=curl -s -H "Content-Type: application/json" -H "Authorization: Bearer ${TERNARY_API_TOKEN.value}" "${TERNARY_BASE_API_URL}/reports/${match['id']}" | jq . 
             ...    env=${env}
